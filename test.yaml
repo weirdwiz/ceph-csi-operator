@@ -1,0 +1,156 @@
+kind: CephCSIOperatorConfig
+apiVersion: csi.ceph.io/v1alpha1
+metadata:
+  name: ceph-csi-operator-config
+  namespace: ceph-csi-operator-system
+spec:
+  logLevel: 1
+  driverSpecDefaults:
+    logging:
+      logLevel: 5
+      maxfiles: 5
+      maxLogSize: 10M
+    clusterName: 5c63ad7e-74fe-4724-a511-4ccdc560da56
+    enableMetadata: true
+    grpcTimeout: 100
+    snapshotPolicy: auto-detect
+    generateOMapInfo: true
+    fsGroupPolicy: File
+    encryption:
+      configMapRef:
+        name: encryption-config-map-name
+    plugin:
+      priorityClassName: system-node-critical
+      updateStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 1
+      labels:
+        app: csi
+      annotations:
+        k8s.v1.cni.cncf.io/networks: macvlan-conf-1
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: storage
+                operator: In
+                values:
+                - node
+      tolerations:
+      - key: storage
+        operator: Exists
+      resources:
+        registrar:
+          limits:
+            cpu: '200'
+            memory: '500'
+          requests:
+            cpu: '100'
+            memory: '250'
+        liveness:
+          limits:
+            cpu: '200'
+            memory: '500'
+          requests:
+            cpu: '100'
+            memory: '250'
+        plugin:
+          limits:
+            cpu: '200'
+            memory: '500'
+          requests:
+            cpu: '100'
+            memory: '250'
+      volumes:
+      - name: host-run
+        volumes:
+          hostPath:
+            path: "/run"
+            type: Directory
+        volumeMounts:
+          name: ''
+          readOnly: true
+          mountPath: "/run"
+          mountPropagation: Bidirectional
+      kubeletDirPath: "/var/lib/kubelet"
+      imagePullPolicy: IfNotPresent
+    provisioner:
+      priorityClassName: system-cluster-critical
+      labels:
+        app: provisioner
+      annotations:
+        k8s.v1.cni.cncf.io/networks: macvlan-conf-1
+      provisionerReplicas: 2
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: storage
+                operator: In
+                values:
+                - node
+      tolerations:
+      - key: storage
+        operator: Exists
+      resources:
+        attacher:
+          limits:
+            cpu: '200'
+            memory: '500'
+          requests:
+            cpu: '100'
+            memory: '250'
+        snapshotter:
+          limits:
+            cpu: '200'
+            memory: '500'
+          requests:
+            cpu: '100'
+            memory: '250'
+        resizer:
+          limits:
+            cpu: '200'
+            memory: '500'
+          requests:
+            cpu: '100'
+            memory: '250'
+        provisioner:
+          limits:
+            cpu: '200'
+            memory: '500'
+          requests:
+            cpu: '100'
+            memory: '250'
+        omapGenerator:
+          limits:
+            cpu: '200'
+            memory: '500'
+          requests:
+            cpu: '100'
+            memory: '250'
+        liveness:
+          limits:
+            cpu: '200'
+            memory: '500'
+          requests:
+            cpu: '100'
+            memory: '250'
+        plugin:
+          limits:
+            cpu: '200'
+            memory: '500'
+          requests:
+            cpu: '100'
+            memory: '250'
+    liveness:
+      metricsPort: 8000
+    leaderElection:
+      leaseDuration: 100
+      renewDeadline: 100
+      retryPeriod: 10
+    deployCSIAddons: true
+    cephFsKernelClient: true
+    cephFsKernelMountOptions: ms_mode=secure
